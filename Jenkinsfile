@@ -17,7 +17,7 @@ pipeline {
             steps {
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                        sh 'python -m pip install --upgrade pip'
+                        sh 'python3 -m pip install --upgrade pip'
                         sh 'pip install -r requirements.txt'
                     }
                 }
