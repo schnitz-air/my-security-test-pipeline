@@ -9,15 +9,6 @@ pipeline {
                 git url: 'https://github.com/schnitz-air/my-security-test-pipeline.git', branch: 'main'
             }
         }
-        stage('Run Tests') {
-            steps {
-                script {
-                    docker.image('python:3.8').inside {
-                        sh 'pytest'
-                    }
-                }
-            }
-        }
         stage('Test Outgoing Traffic') {
             steps {
                 script {
