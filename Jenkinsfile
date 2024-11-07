@@ -9,16 +9,6 @@ pipeline {
                 git url: 'https://github.com/schnitz-air/my-security-test-pipeline.git', branch: 'main'
             }
         }
-        stage('Install Dependencies') {
-            steps {
-                script {
-                    docker.image('python:3.8').inside {
-                        sh 'pip install --upgrade pip'
-                        sh 'pip install -r requirements.txt'
-                    }
-                }
-            }
-        }
         stage('Run Tests') {
             steps {
                 script {
