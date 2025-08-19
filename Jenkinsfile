@@ -83,8 +83,13 @@ pipeline {
                     steps {
                         script {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                                sh 'python3 -m pip install --upgrade pip'
-                                sh 'pip install -r requirements.txt'
+                                sh '''
+                                    echo "--- Creating virtual environment and installing dependencies ---"
+                                    python3 -m venv .venv
+                                    source .venv/bin/activate
+                                    python3 -m pip install --upgrade pip
+                                    pip install -r requirements.txt
+                                '''
                             }
                         }
                     }
@@ -93,12 +98,15 @@ pipeline {
                     steps {
                         script {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                                sh 'pytest'
+                                sh '''
+                                    echo "--- Running tests within virtual environment ---"
+                                    source .venv/bin/activate
+                                    pytest
+                                '''
                             }
                         }
                     }
                 }
-                // --- All of your original simulation stages remain here ---
                 stage('Test Outgoing Traffic') {
                     steps {
                         script {
@@ -132,12 +140,61 @@ pipeline {
                         }
                     }
                 }
-                // ... [Other simulation stages: Unauthorized Access, Malware, etc.] ...
+                stage('Unauthorized Access Attempts') {
+                    steps {
+                        script {
+                            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                                sh 'for i in {1..5}; do ssh -o BatchMode=yes -o ConnectTimeout=2 invalid-user@localhost; done'
+                            }
+                        }
+                    }
+                }
+                stage('Simulate Malware') {
+                    steps {
+                        script {
+                            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                                sh 'curl -O https://secure.eicar.org/eicar.com'
+                                sh 'cat eicar.com'
+                                sh 'rm eicar.com'
+                            }
+                        }
+                    }
+                }
+                stage('Privilege Escalation Attempt') {
+                    steps {
+                        script {
+                            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                                sh 'sudo -n -l || echo "Sudo without password not allowed as expected."'
+                            }
+                        }
+                    }
+                }
+                stage('Port Scanning') {
+                    steps {
+                        script {
+                            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                                sh 'nc -zv localhost 1-1000'
+                            }
+                        }
+                    }
+                }
+                stage('C2 Traffic Simulation') {
+                    steps {
+                        script {
+                            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                                sh 'nc badc2server.com 8080 < /dev/null || echo "C2 connection attempt failed as expected."'
+                            }
+                        }
+                    }
+                }
                 stage('Upload Coverage to Codecov') {
                     steps {
                         script {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                                sh 'bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}'
+                                sh '''
+                                    source .venv/bin/activate
+                                    bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
+                                '''
                             }
                         }
                     }
